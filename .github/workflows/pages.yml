@@ -39,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
+        with:
+          enablement: true # tries to switch Pages on; harmless when it already is
       - name: Collect site files
         run: |
           mkdir -p _site
