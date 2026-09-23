@@ -1,0 +1,11 @@
+{
+  "name": "jalali-year-finder",
+  "version": "1.0.0",
+  "description": "Find the Gregorian year to set on a Gregorian-only watch so a Jalali date shows with the right weekday.",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "start": "python3 -m http.server 8000"
+  },
+  "license": "MIT"
+}
