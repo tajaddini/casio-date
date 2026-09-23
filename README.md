@@ -56,8 +56,14 @@ npm start   # serves the site at http://localhost:8000
 ## Deployment
 
 `.github/workflows/pages.yml` runs the tests and deploys the site to GitHub
-Pages on every push to `main` (Settings → Pages → Source must be
-"GitHub Actions").
+Pages on every push to `main`. One-time setup in the repository settings:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. On a GitHub Free plan, Pages only works for public repositories, so make
+   the repository public (Settings → General → Danger Zone) if it is private.
+
+Then re-run the "Deploy to GitHub Pages" workflow from the Actions tab (or
+push any commit) and the site appears at https://tajaddini.github.io/lm/.
 
 ## Setting the date on the 3180 module
 
