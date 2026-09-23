@@ -1,0 +1,5 @@
+node_modules/
+_site/
+.preview-*.png
+image-search/
+.DS_Store

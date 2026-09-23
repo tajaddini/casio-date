@@ -1,0 +1,54 @@
+# Runs the calendar tests and publishes the site to GitHub Pages.
+#
+# One-time setup: Settings → Pages → "Build and deployment" → Source: GitHub Actions.
+# (On a GitHub Free plan the repository also has to be public for Pages to work.)
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - "arena/**" # Arena.ai working branches; safe to remove once merged to main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: true # tries to switch Pages on; harmless when it already is
+      - name: Collect site files
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r assets _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5

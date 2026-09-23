@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jalali Year Finder — show Jalali dates on a Gregorian-only watch</title>
+  <meta name="description" content="Find the Gregorian year to set on a Casio watch (module 3180 and similar) so that a Jalali month, day and weekday line up on the display.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f4f4f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e0f11" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <noscript><p style="margin:16px;font-family:system-ui,sans-serif">This page needs JavaScript to do the calendar maths.</p></noscript>
+  <main class="app">
+    <header class="app__header">
+      <h1>Jalali Year Finder</h1>
+      <p class="lede">
+        Track Jalali dates on a Gregorian-only watch. Enter the Jalali day, month and weekday,
+        and get the Gregorian year to set so the watch shows the right weekday next to the date.
+      </p>
+    </header>
+
+    <section class="panel panel--watch" aria-label="Watch display preview">
+      <div class="watch" id="watch" role="button" tabindex="0" aria-label="Watch display preview. Press to turn on the backlight.">
+        <div class="watch__lcd" id="lcd"></div>
+      </div>
+      <p class="watch__caption">What the watch will show once set · tap the display for the backlight</p>
+    </section>
+
+    <section class="panel panel--result" id="result" aria-live="polite" aria-atomic="true">
+      <p class="result__label" id="resultLabel">Set the year to</p>
+      <p class="result__year" id="resultYear">—</p>
+      <p class="result__detail" id="resultDetail"></p>
+      <dl class="result__meta" id="resultMeta"></dl>
+    </section>
+
+    <section class="panel panel--inputs" aria-label="Date to convert">
+      <div class="segmented" role="tablist" aria-label="Date source">
+        <button type="button" role="tab" id="modeToday" aria-selected="true" data-mode="today">
+          <span class="live-dot" aria-hidden="true"></span>Today
+        </button>
+        <button type="button" role="tab" id="modeCustom" aria-selected="false" data-mode="custom">Pick a date</button>
+      </div>
+
+      <form class="fields" id="form" autocomplete="off" novalidate>
+        <label class="field">
+          <span>Jalali year</span>
+          <input type="number" id="jy" inputmode="numeric" min="1300" max="1500" step="1">
+          <small class="field__hint">Only used to work out the weekday</small>
+        </label>
+        <label class="field">
+          <span>Day</span>
+          <select id="jd"></select>
+          <small class="field__hint" id="jdHint"></small>
+        </label>
+        <label class="field field--wide">
+          <span>Month</span>
+          <select id="jm"></select>
+        </label>
+        <label class="field field--wide">
+          <span>Weekday</span>
+          <select id="wd"></select>
+          <small class="field__hint" id="wdHint">Follows the date above — change it if you only know the weekday</small>
+        </label>
+      </form>
+
+      <div class="inputs__foot">
+        <label class="switch">
+          <input type="checkbox" id="hour12">
+          <span class="switch__track" aria-hidden="true"></span>
+          <span>12-hour time</span>
+        </label>
+        <button type="button" class="linkish" id="resetBtn">Reset to today</button>
+      </div>
+
+      <a class="inputs__answer" id="miniAnswer" href="#result"></a>
+    </section>
+
+    <details class="panel panel--help">
+      <summary>How it works &amp; setting the watch</summary>
+      <div class="help__body">
+        <div>
+          <h2>Why a Gregorian year does the trick</h2>
+          <p>
+            The watch works out the weekday from the year, month and day you set. Jalali months
+            have 29–31 days just like Gregorian ones, so if you type the Jalali month and day
+            into the Gregorian date, the watch counts along correctly until the end of the month.
+            The only thing that would be wrong is the weekday — unless you pick a year in which
+            that Gregorian month/day falls on the same weekday as today's Jalali date.
+          </p>
+          <p>
+            This page searches the watch's calendar range (2000–2099) for such years and picks
+            the one closest to the current year. Every weekday comes around at least once every
+            28 years, so there is always a match — except for 2-30, 2-31, 4-31 and 6-31, days
+            that simply do not exist in the Gregorian calendar.
+          </p>
+          <p>
+            Because the two calendars disagree on month lengths, re-check at the start of each
+            Jalali month (the “in sync until” line tells you when).
+          </p>
+        </div>
+        <div>
+          <h2>Setting the date on a 3180 module</h2>
+          <ol>
+            <li>In Timekeeping mode, hold <kbd>A</kbd> (upper-left, <em>ADJUST</em>) until the city code flashes.</li>
+            <li>Press <kbd>C</kbd> (lower-left, <em>MODE</em>) six times to reach the year.</li>
+            <li>Use <kbd>D</kbd> (lower-right, +) and <kbd>B</kbd> (upper-right, −) to dial in the year shown above.</li>
+            <li>Press <kbd>C</kbd> to move to the month, then again for the day, and enter the Jalali month and day.</li>
+            <li>Press <kbd>A</kbd> to exit. The weekday updates by itself.</li>
+          </ol>
+          <p style="margin-top:10px">
+            The same approach works for any digital watch with a 2000–2099 auto-calendar; only
+            the button sequence differs.
+          </p>
+        </div>
+      </div>
+    </details>
+
+    <footer class="app__footer">
+      Runs entirely in your browser — nothing is sent anywhere. Dates use your device's clock.
+    </footer>
+  </main>
+
+  <script src="assets/jalali.js"></script>
+  <script src="assets/matcher.js"></script>
+  <script src="assets/lcd.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
