@@ -1,6 +1,6 @@
 # Jalali Date for Digital Watches
 
-> The entire repo is an experiment to see how capable agentic models have become. almost nothing, except this file, has bee written by hand!  
+> The entire repo is an experiment to see how capable agentic models have become. almost nothing, except this file, has been written by hand!  
 > **Expect issues :D**
 
 The idea is to show Jalali (Persian) dates on digital watches that only have the Gregorian calendar; that being almost all of them. This solution will work on any digital watch with a 2000–2099 auto-calendar.
