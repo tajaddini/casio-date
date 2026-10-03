@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Jalali Year Finder — show Jalali dates on a Gregorian-only watch</title>
+  <title>Jalali Year Finder</title>
   <meta name="description" content="Find the Gregorian year to set on a Casio watch (module 3180 and similar) so that a Jalali month, day and weekday line up on the display.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f4f4f2" media="(prefers-color-scheme: light)">
@@ -15,69 +15,73 @@
 <body>
   <noscript><p style="margin:16px;font-family:system-ui,sans-serif">This page needs JavaScript to do the calendar maths.</p></noscript>
   <main class="app">
-    <header class="app__header">
-      <h1>Jalali Year Finder</h1>
-      <p class="lede">
-        Track Jalali dates on a Gregorian-only watch. Enter the Jalali day, month and weekday,
-        and get the Gregorian year to set so the watch shows the right weekday next to the date.
-      </p>
-    </header>
+    <!-- Everything in .app__cols is the two-column area on wide screens; it ends
+         before the help box so the sticky date picker stops at its top edge. -->
+    <div class="app__cols">
+      <header class="app__header">
+        <h1>Jalali Year Finder</h1>
+        <p class="lede">
+          Track Jalali dates on a Gregorian-only watch. Enter the Jalali day, month and weekday,
+          and get the Gregorian year to set so the watch shows the right weekday next to the date.
+        </p>
+      </header>
 
-    <section class="panel panel--watch" aria-label="Watch display preview">
-      <div class="watch" id="watch" role="button" tabindex="0" aria-label="Watch display preview. Press to turn on the backlight.">
-        <div class="watch__lcd" id="lcd"></div>
-      </div>
-      <p class="watch__caption">What the watch will show once set · tap the display for the backlight</p>
-    </section>
+      <section class="panel panel--watch" aria-label="Watch display preview">
+        <div class="watch" id="watch" role="button" tabindex="0" aria-label="Watch display preview. Press to turn on the backlight.">
+          <div class="watch__lcd" id="lcd"></div>
+        </div>
+        <p class="watch__caption">What the watch will show once set · tap the display for the backlight</p>
+      </section>
 
-    <section class="panel panel--result" id="result" aria-live="polite" aria-atomic="true">
-      <p class="result__label" id="resultLabel">Set the year to</p>
-      <p class="result__year" id="resultYear">—</p>
-      <p class="result__detail" id="resultDetail"></p>
-      <dl class="result__meta" id="resultMeta"></dl>
-    </section>
+      <section class="panel panel--result" id="result" aria-live="polite" aria-atomic="true">
+        <p class="result__label" id="resultLabel">Set the year to</p>
+        <p class="result__year" id="resultYear">—</p>
+        <p class="result__detail" id="resultDetail"></p>
+        <dl class="result__meta" id="resultMeta"></dl>
+      </section>
 
-    <section class="panel panel--inputs" aria-label="Date to convert">
-      <div class="segmented" role="tablist" aria-label="Date source">
-        <button type="button" role="tab" id="modeToday" aria-selected="true" data-mode="today">
-          <span class="live-dot" aria-hidden="true"></span>Today
-        </button>
-        <button type="button" role="tab" id="modeCustom" aria-selected="false" data-mode="custom">Pick a date</button>
-      </div>
+      <section class="panel panel--inputs" aria-label="Date to convert">
+        <div class="segmented" role="tablist" aria-label="Date source">
+          <button type="button" role="tab" id="modeToday" aria-selected="true" data-mode="today">
+            <span class="live-dot" aria-hidden="true"></span>Today
+          </button>
+          <button type="button" role="tab" id="modeCustom" aria-selected="false" data-mode="custom">Pick a date</button>
+        </div>
 
-      <form class="fields" id="form" autocomplete="off" novalidate>
-        <label class="field">
-          <span>Jalali year</span>
-          <input type="number" id="jy" inputmode="numeric" min="1300" max="1500" step="1">
-          <small class="field__hint">Only used to work out the weekday</small>
-        </label>
-        <label class="field">
-          <span>Day</span>
-          <select id="jd"></select>
-          <small class="field__hint" id="jdHint"></small>
-        </label>
-        <label class="field field--wide">
-          <span>Month</span>
-          <select id="jm"></select>
-        </label>
-        <label class="field field--wide">
-          <span>Weekday</span>
-          <select id="wd"></select>
-          <small class="field__hint" id="wdHint">Follows the date above — change it if you only know the weekday</small>
-        </label>
-      </form>
+        <form class="fields" id="form" autocomplete="off" novalidate>
+          <label class="field">
+            <span>Jalali year</span>
+            <input type="number" id="jy" inputmode="numeric" min="1300" max="1500" step="1">
+            <small class="field__hint">Only used to work out the weekday</small>
+          </label>
+          <label class="field">
+            <span>Day</span>
+            <select id="jd"></select>
+            <small class="field__hint" id="jdHint"></small>
+          </label>
+          <label class="field field--wide">
+            <span>Month</span>
+            <select id="jm"></select>
+          </label>
+          <label class="field field--wide">
+            <span>Weekday</span>
+            <select id="wd"></select>
+            <small class="field__hint" id="wdHint">Follows the date above — change it if you only know the weekday</small>
+          </label>
+        </form>
 
-      <div class="inputs__foot">
-        <label class="switch">
-          <input type="checkbox" id="hour12">
-          <span class="switch__track" aria-hidden="true"></span>
-          <span>12-hour time</span>
-        </label>
-        <button type="button" class="linkish" id="resetBtn">Reset to today</button>
-      </div>
+        <div class="inputs__foot">
+          <label class="switch">
+            <input type="checkbox" id="hour12">
+            <span class="switch__track" aria-hidden="true"></span>
+            <span>12-hour time</span>
+          </label>
+          <button type="button" class="linkish" id="resetBtn">Reset to today</button>
+        </div>
 
-      <a class="inputs__answer" id="miniAnswer" href="#result"></a>
-    </section>
+        <a class="inputs__answer" id="miniAnswer" href="#result"></a>
+      </section>
+    </div>
 
     <details class="panel panel--help">
       <summary>How it works &amp; setting the watch</summary>
