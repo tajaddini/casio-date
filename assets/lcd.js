@@ -1,7 +1,11 @@
 /*
- * Segment LCD renderer that mimics the timekeeping screen of a Casio 6900-series
+ * LCD renderer that mimics the timekeeping screen of a Casio 6900-series
  * module (3180): upper row = weekday + month-day, lower row = hour:minutes seconds,
  * with a "P" indicator for PM. Everything is drawn as SVG so it scales crisply.
+ *
+ * Two different fonts are used, exactly like the real display:
+ *   - the weekday is drawn on a 5 x 5 dot matrix (three uppercase letters),
+ *   - every number, and the "P", is drawn with seven-segment style cells.
  *
  * Exposed as `LCD` in the browser and as a CommonJS module in Node.
  */
@@ -22,6 +26,46 @@
     N: 'ceg', O: 'abcdef', P: 'abefg', R: 'eg', S: 'acdfg', T: 'apq', U: 'bcdef', W: 'bcdefq',
     ' ': ''
   };
+
+  /**
+   * The weekday font: five rows of five pixels per letter, '#' = lit.
+   * This is the dot matrix the module uses for the three-letter day of week.
+   */
+  var MATRIX = {
+    A: ['.###.', '#...#', '#####', '#...#', '#...#'],
+    B: ['####.', '#...#', '####.', '#...#', '####.'],
+    C: ['.####', '#....', '#....', '#....', '.####'],
+    D: ['####.', '#...#', '#...#', '#...#', '####.'],
+    E: ['#####', '#....', '####.', '#....', '#####'],
+    F: ['#####', '#....', '####.', '#....', '#....'],
+    G: ['.####', '#....', '#..##', '#...#', '.###.'],
+    H: ['#...#', '#...#', '#####', '#...#', '#...#'],
+    I: ['#####', '..#..', '..#..', '..#..', '#####'],
+    J: ['..###', '...#.', '...#.', '#..#.', '.##..'],
+    K: ['#...#', '#..#.', '###..', '#..#.', '#...#'],
+    L: ['#....', '#....', '#....', '#....', '#####'],
+    M: ['#...#', '##.##', '#.#.#', '#...#', '#...#'],
+    N: ['#...#', '##..#', '#.#.#', '#..##', '#...#'],
+    O: ['.###.', '#...#', '#...#', '#...#', '.###.'],
+    P: ['####.', '#...#', '####.', '#....', '#....'],
+    Q: ['.###.', '#...#', '#...#', '#..#.', '.##.#'],
+    R: ['####.', '#...#', '####.', '#..#.', '#...#'],
+    S: ['.####', '#....', '.###.', '....#', '####.'],
+    T: ['#####', '..#..', '..#..', '..#..', '..#..'],
+    U: ['#...#', '#...#', '#...#', '#...#', '.###.'],
+    V: ['#...#', '#...#', '#...#', '.#.#.', '..#..'],
+    W: ['#...#', '#...#', '#.#.#', '##.##', '#...#'],
+    X: ['#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
+    Y: ['#...#', '.#.#.', '..#..', '..#..', '..#..'],
+    Z: ['#####', '...#.', '..#..', '.#...', '#####'],
+    ' ': ['.....', '.....', '.....', '.....', '.....']
+  };
+
+  /** 5x5 glyph rows for a character; unknown characters render blank. */
+  function matrixGlyph(ch) {
+    var g = MATRIX[ch];
+    return g || MATRIX[' '];
+  }
 
   function el(name, attrs, parent) {
     var node = document.createElementNS(NS, name);
@@ -75,7 +119,8 @@
   /** Layout in SVG user units; the drawing is 1000 x 470. */
   var VIEW = { w: 1000, h: 470 };
   var LAYOUT = {
-    upper: { y: 52, h: 96, w: 66, t: 13, pitch: 88 },
+    upper: { y: 48, h: 104, w: 72, t: 13.5, pitch: 96 },
+    matrix: { size: 104, gap: 16, x: 68 },
     lower: { y: 196, h: 220, w: 120, t: 24, pitch: 150 },
     seconds: { y: 266, h: 150, w: 84, t: 17, pitch: 104 },
     pm: { x: 52, y: 202, w: 30, h: 46, t: 7 }
@@ -104,7 +149,8 @@
     var ghost = el('g', { class: 'lcd__ghost' }, svg);
     var ink = el('g', { class: 'lcd__ink' }, svg);
 
-    var cells = {};
+    var cells = {};      // seven-segment style cells, keyed by segment name
+    var matrices = {};   // 5x5 dot-matrix cells, arrays of 25 pixels
 
     /** `ghostOnly` limits which segments get a ghost (unlit) outline, for indicators. */
     function addCell(id, x, y, w, h, t, letter, ghostOnly) {
@@ -117,10 +163,34 @@
       cells[id] = polys;
     }
 
-    // Upper row: weekday letters on the left, month-day on the right.
+    /** A 5 x 5 dot-matrix cell, `size` wide and tall, used for the weekday. */
+    function addMatrix(id, x, y, size) {
+      var gap = size * 0.055;
+      var dot = (size - gap * 4) / 5;
+      var pixels = [];
+      for (var row = 0; row < 5; row += 1) {
+        for (var col = 0; col < 5; col += 1) {
+          var attrs = {
+            x: (x + col * (dot + gap)).toFixed(2),
+            y: (y + row * (dot + gap)).toFixed(2),
+            width: dot.toFixed(2),
+            height: dot.toFixed(2),
+            rx: (dot * 0.16).toFixed(2),
+            class: 'dot'
+          };
+          el('rect', attrs, ghost);
+          pixels.push(el('rect', attrs, ink));
+        }
+      }
+      matrices[id] = pixels;
+    }
+
+    // Upper row: weekday (5x5 dot matrix) on the left, month-day on the right.
     var U = LAYOUT.upper;
-    var x0 = 98;
-    for (var i = 0; i < 3; i += 1) addCell('wd' + i, x0 + i * U.pitch, U.y, U.w, U.h, U.t, true);
+    var M = LAYOUT.matrix;
+    var matrixY = U.y + (U.h - M.size) / 2;
+    var matrixPitch = M.size + M.gap;
+    for (var i = 0; i < 3; i += 1) addMatrix('wd' + i, M.x + i * matrixPitch, matrixY, M.size);
 
     var right = VIEW.w - 52;
     var dayOnes = right - U.w, dayTens = dayOnes - U.pitch;
@@ -173,6 +243,19 @@
       }
     }
 
+    /** Lights the pixels of a 5x5 dot-matrix cell for character `ch`. */
+    function lightMatrix(id, ch) {
+      var rows = matrixGlyph(ch);
+      var pixels = matrices[id];
+      for (var row = 0; row < 5; row += 1) {
+        for (var col = 0; col < 5; col += 1) {
+          var on = rows[row].charAt(col) === '#';
+          if (on) pixels[row * 5 + col].classList.add('on');
+          else pixels[row * 5 + col].classList.remove('on');
+        }
+      }
+    }
+
     function digit(id, value) {
       light(id, value === null || value === undefined ? '' : DIGITS[value]);
     }
@@ -190,7 +273,7 @@
      */
     function set(state) {
       var wd = (state.weekday || '   ').toUpperCase();
-      for (var k = 0; k < 3; k += 1) light('wd' + k, LETTERS[wd.charAt(k)] || '');
+      for (var k = 0; k < 3; k += 1) lightMatrix('wd' + k, wd.charAt(k));
       number('m0', 'm1', state.month, false);
       number('d0', 'd1', state.day, false);
       number('h0', 'h1', state.hour, false);
@@ -210,5 +293,8 @@
     return { svg: svg, set: set };
   }
 
-  return { mount: mount, DIGITS: DIGITS, LETTERS: LETTERS, cellSegments: cellSegments };
+  return {
+    mount: mount, DIGITS: DIGITS, LETTERS: LETTERS, MATRIX: MATRIX,
+    matrixGlyph: matrixGlyph, cellSegments: cellSegments
+  };
 }));
